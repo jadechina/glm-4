@@ -3,7 +3,7 @@
 
 torch>=2.3.0
 torchvision>=0.18.0
-transformers==4.40.0
+transformers>=4.40.0
 huggingface-hub>=0.23.1
 sentencepiece>=0.2.0
 pydantic>=2.7.1
