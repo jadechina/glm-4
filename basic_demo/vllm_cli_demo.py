@@ -15,8 +15,7 @@ from transformers import AutoTokenizer
 from vllm import SamplingParams, AsyncEngineArgs, AsyncLLMEngine
 from typing import List, Dict
 
-MODEL_PATH = 'THUDM/glm-4-9b'
-
+MODEL_PATH = '/mnt/obsfs/model/glm-4-9b-chat-1m'
 
 def load_model_and_tokenizer(model_dir: str):
     engine_args = AsyncEngineArgs(
@@ -29,10 +28,10 @@ def load_model_and_tokenizer(model_dir: str):
         enforce_eager=True,
         worker_use_ray=True,
         engine_use_ray=False,
-        disable_log_requests=True
+        disable_log_requests=True,
         # 如果遇见 OOM 现象，建议开启下述参数
-        # enable_chunked_prefill=True,
-        # max_num_batched_tokens=8192
+        enable_chunked_prefill=True,
+        max_num_batched_tokens=8192
     )
     tokenizer = AutoTokenizer.from_pretrained(
         model_dir,
@@ -42,9 +41,7 @@ def load_model_and_tokenizer(model_dir: str):
     engine = AsyncLLMEngine.from_engine_args(engine_args)
     return engine, tokenizer
 
-
 engine, tokenizer = load_model_and_tokenizer(MODEL_PATH)
-
 
 async def vllm_gen(messages: List[Dict[str, str]], top_p: float, temperature: float, max_dec_len: int):
     inputs = tokenizer.apply_chat_template(
@@ -73,7 +70,6 @@ async def vllm_gen(messages: List[Dict[str, str]], top_p: float, temperature: fl
     sampling_params = SamplingParams(**params_dict)
     async for output in engine.generate(inputs=inputs, sampling_params=sampling_params, request_id=f"{time.time()}"):
         yield output.outputs[0].text
-
 
 async def chat():
     history = []
